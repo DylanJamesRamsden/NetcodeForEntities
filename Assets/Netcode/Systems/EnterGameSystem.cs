@@ -17,6 +17,9 @@ public partial struct EnterGameClientSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
+        // Makes sure there is a spawner in the world before connecting any players
+        state.RequireForUpdate<Spawner>();
+        
         // Need to hunt down the clients that have an ID but have not entered the game yet
         // Creates a temporary allocation for all entities that have a NetworkID but don't have a NetworkSteamInGame
         var Builder = new EntityQueryBuilder(Allocator.Temp).
@@ -70,6 +73,9 @@ public partial struct EnterGameServerSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
+        // Makes sure there is a spawner in the world before connecting any players
+        state.RequireForUpdate<Spawner>();
+        
         var Builder = new EntityQueryBuilder(Allocator.Temp).
             WithAll<EnterGameRPC>().
             WithAll<ReceiveRpcCommandRequest>(); // Receives an RPC
@@ -89,6 +95,9 @@ public partial struct EnterGameServerSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        // Gets our Entity prefab
+        Entity prefab = SystemAPI.GetSingleton<Spawner>().EntityToTrack;
+        
         var WorldName = state.WorldUnmanaged.Name;
         var CommandBuffer = new EntityCommandBuffer(Allocator.Temp);
         //Updates the NetworkID
@@ -99,6 +108,14 @@ public partial struct EnterGameServerSystem : ISystem
         {
             CommandBuffer.AddComponent<NetworkStreamInGame>(reqSRC.ValueRO.SourceConnection);
             var networkID = NetworkID[reqSRC.ValueRO.SourceConnection];
+            
+            // Creates our new player
+            // Only creates on the server as it replicated down to clients
+            var newPlayer = CommandBuffer.Instantiate(prefab);
+            CommandBuffer.SetComponent(newPlayer, new GhostOwner {NetworkId = networkID.Value});
+            
+            // When the player disconnects it deletes the player
+            CommandBuffer.AppendToBuffer(reqSRC.ValueRO.SourceConnection, new LinkedEntityGroup {Value = newPlayer});
             
             Debug.Log($"{WorldName} connecting {networkID.Value}");
             
