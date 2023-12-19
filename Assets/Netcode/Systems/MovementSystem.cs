@@ -50,10 +50,10 @@ public partial struct MovementJob : IJobEntity
 
     public void Execute(InputComponent inputComponent, ref LocalTransform localTransform)
     {
-        var move = new float2(inputComponent.HorizontalMovement, inputComponent.VerticalMovement);
+        var move = new float3(inputComponent.HorizontalMovement, inputComponent.JumpMovement, inputComponent.VerticalMovement);
         // Normalize!!! No!! Seems to break the calculation, use NormalizeSafe
         move = math.normalizesafe(move) * Speed;
 
-        localTransform.Position += new float3(move.x, 0.0f, move.y);
+        localTransform.Position += new float3(move.x, move.y, move.z);
     }
 }

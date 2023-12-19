@@ -7,4 +7,5 @@ public struct InputComponent : IInputComponentData
 {
     public float HorizontalMovement;
     public float VerticalMovement;
+    public float JumpMovement;
 }

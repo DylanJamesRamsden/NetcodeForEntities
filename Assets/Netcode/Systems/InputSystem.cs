@@ -25,6 +25,8 @@ public partial struct InputSystem : ISystem
         bool right = Input.GetKey(KeyCode.D);
         bool forward = Input.GetKey(KeyCode.W);
         bool back = Input.GetKey(KeyCode.S);
+        bool jumpUp = Input.GetKey(KeyCode.Space);
+        bool jumpDown = Input.GetKey(KeyCode.LeftShift);
 
         // GhostOwnerIsLocal makes sure that the Entity is being controlled and is owned locally
         foreach (var inputComponent in SystemAPI.Query<RefRW<InputComponent>>().WithAll<GhostOwnerIsLocal>())
@@ -40,6 +42,10 @@ public partial struct InputSystem : ISystem
                 inputComponent.ValueRW.VerticalMovement += 1;
             if (back)
                 inputComponent.ValueRW.VerticalMovement -= 1;
+            if (jumpUp)
+                inputComponent.ValueRW.JumpMovement += 1;
+            if (jumpDown)
+                inputComponent.ValueRW.JumpMovement -= 1;
         }
     }
 }
